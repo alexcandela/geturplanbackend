@@ -97,11 +97,11 @@ class User extends Authenticatable implements JWTSubject
         ]);
         if (isset($data['img'])) {
             $user->update([
-                'img' => 'https://geturplanbackend.online/storage/images/users/' . $user->id . '/' . $data['img']
+                'img' => env('APP_URL') . '/storage/images/users/' . $user->id . '/' . $data['img']
             ]);
         } else if (isset($data['default_img'])) {
             $user->update([
-                'img' => 'https://geturplanbackend.online/storage/default/default_user.png'
+                'img' => env('APP_URL') . '/storage/default/default_user.png'
             ]);
         }
         
