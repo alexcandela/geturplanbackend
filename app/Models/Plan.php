@@ -74,7 +74,7 @@ class Plan extends Model
         ]);
         $img = $this->storageImage($data['principal_image'], $plan);
         $plan->update([
-            'img' => 'https://geturplanbackend.online/storage/images/plans/' . $plan->id . '/' . $img
+            'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $img
         ]);
         foreach ($data['categories'] as $name) {
             $category = Category::where('name', $name)->first();
@@ -90,7 +90,7 @@ class Plan extends Model
             foreach ($data['secondary_images'] as $img) {
                 $secimg = $this->storageImage($img, $plan);
                 Secondaryimage::create([
-                    'img' => 'https://geturplanbackend.online/storage/images/plans/' . $plan->id . '/' . $secimg,
+                    'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $secimg,
                     'plan_id' => $plan->id
                 ]);
             }
@@ -170,7 +170,7 @@ class Plan extends Model
             $this->deleteImg($plan);
             $img = $this->storageImage($data['principal_image'], $plan);
             $plan->update([
-                'img' => 'https://geturplanbackend.online/storage/images/plans/' . $plan->id . '/' . $img
+                'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $img
             ]);
         }
 
@@ -188,7 +188,7 @@ class Plan extends Model
             foreach ($data['secondary_images'] as $img) {
                 $secimg = $this->storageImage($img, $plan);
                 Secondaryimage::create([
-                    'img' => 'https://geturplanbackend.online/storage/images/plans/' . $plan->id . '/' . $secimg,
+                    'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $secimg,
                     'plan_id' => $plan->id
                 ]);
             }
