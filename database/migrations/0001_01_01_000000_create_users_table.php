@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('img');
+            $table->string('img')->default(env('APP_URL') . '/storage/default/default_user.png');
             $table->text('description')->nullable();
             $table->string('instagram')->nullable();
             $table->string('facebook')->nullable();
