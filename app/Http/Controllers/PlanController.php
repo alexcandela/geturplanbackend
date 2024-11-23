@@ -18,7 +18,7 @@ class PlanController extends Controller
     {
         try {
             $plans = Plan::withCount(['likes' => function ($query) {
-                $query->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]);
+                // $query->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]);
             }])
                 ->orderByDesc('likes_count')
                 ->with('user', 'categories', 'comments')

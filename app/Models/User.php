@@ -107,4 +107,12 @@ class User extends Authenticatable implements JWTSubject
         
         return $user;
     }
+
+    public static function updateGeneralSettings($data, $user) {
+        $user->update([
+            'username' => $data['username'],
+            'email' => $data['email']
+        ]);
+        return $user;
+    }
 }

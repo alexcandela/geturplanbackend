@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\EditProfileController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ProfileController;
@@ -30,11 +31,14 @@ Route::get('/get-user/{username}', [UserController::class, 'getUser']);
 
 Route::get('get-user-plans', [UserController::class, 'getUserPlans']);
 
+Route::get('reset-password', [UserController::class, 'sendEmailResetPassword']);
+
 Route::middleware([Authenticate::class])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/like', [LikeController::class, 'like']);
     Route::post('/comment', [CommentController::class, 'comment']);
     Route::post('/edit-profile', [ProfileController::class, 'editProfile']);
+    Route::post('/general-settings', [EditProfileController::class, 'generalSettings']);
     Route::post('/post-plan', [PlanController::class, 'postPlan']);
     Route::delete('/delete-plan/{id}', [PlanController::class, 'deletePlan']);
     Route::post('/update-plan/{id}', [PlanController::class, 'updatePlan']);

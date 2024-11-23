@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Plan;
 use App\Models\User;
+use App\Notifications\ResetPassword;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -70,6 +71,24 @@ class UserController extends Controller
                 'status' => 'error',
                 'message' => 'Error al obtener los planes del usuario.'
             ], 500);
+        }
+    }
+
+    public function sendEmailResetPassword() {
+        try {
+            $user = auth()->user();
+            $user->notify(new ResetPassword());
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Email enviado correctamente.'
+            ], 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error al enviar el email al usuario.'
+            ], 500);
+            
         }
     }
 }
