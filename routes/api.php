@@ -39,6 +39,7 @@ Route::middleware([Authenticate::class])->group(function () {
     Route::post('/comment', [CommentController::class, 'comment']);
     Route::post('/edit-profile', [ProfileController::class, 'editProfile']);
     Route::post('/general-settings', [EditProfileController::class, 'generalSettings']);
+    Route::post('/update-password', [EditProfileController::class, 'updatePassword']);
     Route::post('/post-plan', [PlanController::class, 'postPlan']);
     Route::delete('/delete-plan/{id}', [PlanController::class, 'deletePlan']);
     Route::post('/update-plan/{id}', [PlanController::class, 'updatePlan']);

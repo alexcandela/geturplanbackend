@@ -115,4 +115,11 @@ class User extends Authenticatable implements JWTSubject
         ]);
         return $user;
     }
+
+    public static function updatePassword($newPass, $user) {
+        $user->update([
+            'password' => Hash::make($newPass)
+        ]);
+        return $user;
+    }
 }
