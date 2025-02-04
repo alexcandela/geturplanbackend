@@ -63,39 +63,43 @@ class Plan extends Model
 
     public function createPlan($data, $user)
     {
-        $plan = Plan::create([
-            'name' => $data['name'],
-            'description' => $data['description'],
-            'province' => $data['province'],
-            'city' => $data['city'],
-            'url' => $data['url'],
-            'img' => 'null',
-            'user_id' => $user->id
-        ]);
-        $img = $this->storageImage($data['principal_image'], $plan);
-        $plan->update([
-            'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $img
-        ]);
-        foreach ($data['categories'] as $name) {
-            $category = Category::where('name', $name)->first();
-            if ($category) { // Verifica si la categoría existe
-                if (!$plan->categories()->where('category_id', $category->id)->exists()) {
-                    $plan->categories()->attach($category->id);
+        try {
+            $plan = Plan::create([
+                'name' => $data['name'],
+                'description' => $data['description'],
+                'province' => $data['province'],
+                'city' => $data['city'],
+                'url' => $data['url'],
+                'img' => 'null',
+                'user_id' => $user->id
+            ]);
+            $img = $this->storageImage($data['principal_image'], $plan);
+            $plan->update([
+                'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $img
+            ]);
+            foreach ($data['categories'] as $name) {
+                $category = Category::where('name', $name)->first();
+                if ($category) { // Verifica si la categoría existe
+                    if (!$plan->categories()->where('category_id', $category->id)->exists()) {
+                        $plan->categories()->attach($category->id);
+                    }
+                } else {
+                    Log::warning("Categoría no encontrada: " . $name);
                 }
-            } else {
-                Log::warning("Categoría no encontrada: " . $name);
             }
-        }
-        if (isset($data['secondary_images'])) {
-            foreach ($data['secondary_images'] as $img) {
-                $secimg = $this->storageImage($img, $plan);
-                Secondaryimage::create([
-                    'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $secimg,
-                    'plan_id' => $plan->id
-                ]);
+            if (isset($data['secondary_images'])) {
+                foreach ($data['secondary_images'] as $img) {
+                    $secimg = $this->storageImage($img, $plan);
+                    Secondaryimage::create([
+                        'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $secimg,
+                        'plan_id' => $plan->id
+                    ]);
+                }
             }
+            return $plan;
+        } catch (\Throwable $th) {
+            Log::error('Error en createPlan@PlanModel. ' . $th->getMessage());
         }
-        return $plan;
     }
 
     public function updateCategories($plan, $categories)

@@ -228,7 +228,6 @@ class PlanController extends Controller
             $user = auth()->user();
             $plan = new Plan();
             $plan = $plan->createPlan($data, $user);
-
             return response()->json([
                 'status' => 'success',
                 'message' => 'Plan publicado correctamente',

@@ -28,8 +28,8 @@ class PlanFormRequest extends FormRequest
             'city' => 'required|string|max:255',
             'url' => 'required|url',
             'categories' => 'required|string',
-            'principal_image' => 'required|image|mimes:jpeg,png,jpg,svg|max:2048',
-            'secondary_images.*' => 'image|mimes:jpeg,png,jpg,svg|max:2048', 
+            'principal_image' => 'required|image|mimes:jpeg,png,jpg,svg|max:5120',
+            'secondary_images.*' => 'image|mimes:jpeg,png,jpg,svg|max:5120', 
         ];
     }
 }
