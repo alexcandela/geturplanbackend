@@ -49,6 +49,10 @@ class Plan extends Model
     {
         return $this->hasMany(Like::class);
     }
+
+    public function reply() {
+        return $this->hasMany(CommentReply::class);
+    }
     public function storageImage($image, $plan)
     {
         try {
