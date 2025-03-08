@@ -247,31 +247,42 @@ class PlanController extends Controller
     {
         try {
             $user = auth()->user();
-            $plan = Plan::findOrFail($id);
+            $plan = Plan::find($id);
+
+            if (!$plan) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Plan no encontrado',
+                ], 404);
+            }
+
             if ($plan->user_id == $user->id) {
                 $plan->delete();
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Plan eliminado correctamente',
+                ], 200);
             } else {
-                return;
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No tienes permisos para eliminar este plan',
+                ], 403);
             }
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Plan eliminado correctamente',
-            ], 200);
         } catch (\Throwable $th) {
-            //throw $th;
-            Log::error('Error en postPlan@PlanController. ' . $th->getMessage());
+            Log::error('Error en deletePlan@PlanController. ' . $th->getMessage());
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error al eliminar el plan.'
+                'message' => 'Hubo un problema al intentar eliminar el plan.'
             ], 500);
         }
     }
+
 
     public function checkPlan($userId, $planId)
     {
         try {
             $plan = Plan::findOrfail($planId);
-            if ($plan->user_id = $userId) {
+            if ($plan->user_id == $userId) {
                 return $plan;
             } else {
                 return false;;
@@ -309,6 +320,11 @@ class PlanController extends Controller
                     'message' => 'Plan editado correctamente',
                     'planId' => $plan->id
                 ], 200);
+            } else {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No tienes permisos para editar este plan',
+                ], 403);
             }
         } catch (\Throwable $th) {
             //throw $th;
