@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Log;
 
 class CommentController extends Controller
 {
-    public function comment(CommentRequest $request) {
+    public function comment(CommentRequest $request)
+    {
         try {
             $data = $request->validated();
             $user = auth()->user();
@@ -25,7 +26,45 @@ class CommentController extends Controller
             Log::error('Error en comment@CommentController. ' . $th->getMessage());
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error al dar like en el plan. ' . $th->getMessage()
+                'message' => 'Error al comentar el plan. ' . $th->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteComment($id)
+    {
+        try {
+            $user = auth()->user();
+
+            $comment = Comment::find($id);
+
+            // Si no existe el comentario
+            if (!$comment) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Comentario no encontrado.'
+                ], 404);
+            }
+
+            if ($comment->user_id !== $user->id) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No tienes permiso para eliminar este comentario.'
+                ], 403);
+            }
+
+            $comment->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Comentario eliminado correctamente'
+            ], 200);
+        } catch (\Throwable $th) {
+            Log::error('Error en deleteComment@CommentController: ' . $th->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error al eliminar el comentario.'
             ], 500);
         }
     }
