@@ -24,6 +24,6 @@ Este backend proporciona la API necesaria para que los usuarios puedan:
 ## 🔗 Conéctate con el frontend
 
 Este backend trabaja en conjunto con el frontend de la aplicación, desarrollado en Angular.  
-Puedes ver más sobre el frontend aquí: [Repositorio Frontend](https://github.com/alexcandedla/geturplanfrontend)
+Puedes ver más sobre el frontend aquí: [Repositorio Frontend](https://github.com/alexcandela/geturplanfrontend)
 
 ---
