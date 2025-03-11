@@ -19,6 +19,11 @@ class Comment extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function likes()
+    {
+        return $this->hasMany(CommentLike::class);
+    }
+
     public function plan()
     {
         return $this->belongsTo(Plan::class);

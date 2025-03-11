@@ -45,30 +45,46 @@ class PlanController extends Controller
     }
 
     public function getPlanById($id)
-    {
-        try {
-            $plan = Plan::withCount('likes')
-                ->with(['user', 'categories', 'secondaryImages', 'comments' => function ($query) {
+{
+    try {
+        $plan = Plan::withCount('likes')
+            ->with([
+                'user',
+                'categories',
+                'secondaryImages',
+                'comments' => function ($query) {
                     $query->orderBy('created_at', 'desc');
-                }, 'comments.user'])
-                ->findOrFail($id);
-            if ($user = auth()->user()) {
-                $userId = $user->id;
-                $plan->has_liked = $plan->likes()->where('user_id', $userId)->exists();
-            }
-            return response()->json([
-                'status' => 'success',
-                'plan' => $plan,
-            ], 200);
-        } catch (\Throwable $th) {
-            //throw $th;
-            Log::error('Error en getPlanById@PlanController. ' . $th->getMessage());
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Error al obtener el plan por id.'
-            ], 500);
+                },
+                'comments.user',
+                'comments.likes'
+            ])
+            ->findOrFail($id);
+
+        foreach ($plan->comments as $comment) {
+            $comment->likes_count = $comment->likes->count();
         }
+
+        if ($user = auth()->user()) {
+            $userId = $user->id;
+            $plan->has_liked = $plan->likes()->where('user_id', $userId)->exists();
+            foreach ($plan->comments as $comment) {
+                $comment->has_liked = $comment->likes()->where('user_id', $userId)->exists();
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'plan' => $plan,
+        ], 200);
+    } catch (\Throwable $th) {
+        Log::error('Error en getPlanById@PlanController. ' . $th->getMessage());
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Error al obtener el plan por id.'
+        ], 500);
     }
+}
+
 
     public function getAllPlans(Request $request)
     {
