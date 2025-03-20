@@ -14,6 +14,14 @@ use Illuminate\Database\Eloquent\Collection;
 
 class PlanController extends Controller
 {
+    public function hasReplies($plans)
+    {
+        try {
+        } catch (\Throwable $th) {
+            Log::error('Error en hasReplies@PlanController. ' . $th->getMessage());
+        }
+    }
+
     public function getPopularPlans()
     {
         try {
@@ -45,45 +53,48 @@ class PlanController extends Controller
     }
 
     public function getPlanById($id)
-{
-    try {
-        $plan = Plan::withCount('likes')
-            ->with([
-                'user',
-                'categories',
-                'secondaryImages',
-                'comments' => function ($query) {
-                    $query->orderBy('created_at', 'desc');
-                },
-                'comments.user',
-                'comments.likes'
-            ])
-            ->findOrFail($id);
+    {
+        try {
+            $plan = Plan::withCount('likes')
+                ->with([
+                    'user',
+                    'categories',
+                    'secondaryImages',
+                    'comments' => function ($query) {
+                        $query->orderBy('created_at', 'desc');
+                    },
+                    'comments.user',
+                    'comments.likes',
+                    'comments.replies',
+                    'comments.replies.user'
+                ])
+                ->findOrFail($id);
 
-        foreach ($plan->comments as $comment) {
-            $comment->likes_count = $comment->likes->count();
-        }
-
-        if ($user = auth()->user()) {
-            $userId = $user->id;
-            $plan->has_liked = $plan->likes()->where('user_id', $userId)->exists();
             foreach ($plan->comments as $comment) {
-                $comment->has_liked = $comment->likes()->where('user_id', $userId)->exists();
+                $comment->likes_count = $comment->likes->count();
+                $comment->has_replies = $comment->replies->isNotEmpty();
             }
-        }
 
-        return response()->json([
-            'status' => 'success',
-            'plan' => $plan,
-        ], 200);
-    } catch (\Throwable $th) {
-        Log::error('Error en getPlanById@PlanController. ' . $th->getMessage());
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Error al obtener el plan por id.'
-        ], 500);
+            if ($user = auth()->user()) {
+                $userId = $user->id;
+                $plan->has_liked = $plan->likes()->where('user_id', $userId)->exists();
+                foreach ($plan->comments as $comment) {
+                    $comment->has_liked = $comment->likes()->where('user_id', $userId)->exists();
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'plan' => $plan,
+            ], 200);
+        } catch (\Throwable $th) {
+            Log::error('Error en getPlanById@PlanController. ' . $th->getMessage() . $th);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error al obtener el plan por id.'
+            ], 500);
+        }
     }
-}
 
 
     public function getAllPlans(Request $request)

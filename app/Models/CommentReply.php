@@ -19,12 +19,16 @@ class CommentReply extends Model
         return $this->belongsTo(Comment::class);
     }
 
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
+
     public static function createReply($data, $id) {
-        $comment = Comment::create([
-            'reply' => $data['comment'],
-            'comment_id' => $data['planId'],
+        $reply = CommentReply::create([
+            'reply' => $data['reply'],
+            'comment_id' => $data['commentId'],
             'user_id' => $id
         ]);
-        return $comment;
+        return $reply;
     }
 }

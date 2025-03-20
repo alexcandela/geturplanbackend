@@ -37,8 +37,10 @@ Route::middleware([Authenticate::class])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/like', [LikeController::class, 'like']);
     Route::post('/comment', [CommentController::class, 'comment']);
+    Route::post('/reply', [CommentController::class, 'reply']);
     Route::post('/comment-like', [CommentController::class, 'like']);
     Route::delete('/delete-comment/{id}', [CommentController::class, 'deleteComment']);
+    Route::delete('/delete-reply/{id}', [CommentController::class, 'deleteReply']);
     Route::post('/edit-profile', [ProfileController::class, 'editProfile']);
     Route::post('/general-settings', [EditProfileController::class, 'generalSettings']);
     Route::post('/update-password', [EditProfileController::class, 'updatePassword']);

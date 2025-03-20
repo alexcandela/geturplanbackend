@@ -24,6 +24,11 @@ class Comment extends Model
         return $this->hasMany(CommentLike::class);
     }
 
+    public function replies()
+    {
+        return $this->hasMany(CommentReply::class);
+    }
+
     public function plan()
     {
         return $this->belongsTo(Plan::class);
