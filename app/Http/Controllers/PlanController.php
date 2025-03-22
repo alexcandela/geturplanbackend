@@ -66,13 +66,17 @@ class PlanController extends Controller
                     'comments.user',
                     'comments.likes',
                     'comments.replies',
-                    'comments.replies.user'
+                    'comments.replies.user',
+                    'comments.replies.likes'
                 ])
                 ->findOrFail($id);
 
             foreach ($plan->comments as $comment) {
                 $comment->likes_count = $comment->likes->count();
                 $comment->has_replies = $comment->replies->isNotEmpty();
+                foreach ($comment->replies as $reply) {
+                    $reply->likes_count = $reply->likes->count();
+                }
             }
 
             if ($user = auth()->user()) {
@@ -80,9 +84,11 @@ class PlanController extends Controller
                 $plan->has_liked = $plan->likes()->where('user_id', $userId)->exists();
                 foreach ($plan->comments as $comment) {
                     $comment->has_liked = $comment->likes()->where('user_id', $userId)->exists();
+                    foreach ($comment->replies as $reply) {
+                        $reply->has_liked = $reply->likes()->where('user_id', $userId)->exists();
+                    }
                 }
             }
-
             return response()->json([
                 'status' => 'success',
                 'plan' => $plan,

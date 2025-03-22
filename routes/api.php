@@ -39,6 +39,7 @@ Route::middleware([Authenticate::class])->group(function () {
     Route::post('/comment', [CommentController::class, 'comment']);
     Route::post('/reply', [CommentController::class, 'reply']);
     Route::post('/comment-like', [CommentController::class, 'like']);
+    Route::post('/reply-like', [CommentController::class, 'replyLike']);
     Route::delete('/delete-comment/{id}', [CommentController::class, 'deleteComment']);
     Route::delete('/delete-reply/{id}', [CommentController::class, 'deleteReply']);
     Route::post('/edit-profile', [ProfileController::class, 'editProfile']);

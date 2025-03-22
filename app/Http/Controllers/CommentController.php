@@ -7,6 +7,7 @@ use App\Http\Requests\ReplyRequest;
 use App\Models\Comment;
 use App\Models\CommentLike;
 use App\Models\CommentReply;
+use App\Models\CommentReplyLike;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -79,6 +80,17 @@ class CommentController extends Controller
             return false;
         } else {
             $like = CommentLike::addLike($user, $comment->id);
+            return true;
+        }
+    }
+
+    public function gestionarReplyLike($user, $reply){
+        if ($reply->likes()->where('user_id', $user->id)->exists()) {
+            $like = $reply->likes()->where('user_id', $user->id);
+            CommentReplyLike::removeLike($like);
+            return false;
+        } else {
+            $like = CommentReplyLike::addLike($user, $reply->id);
             return true;
         }
     }
@@ -160,6 +172,31 @@ class CommentController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'Error al eliminar la respuesta.'
+            ], 500);
+        }
+    }
+
+    public function replyLike(Request $request) {
+        try {
+            $data = $request->validate([
+                'replyId' => 'required|integer',
+            ]);
+            
+            $replyId = $data['replyId'];
+            $reply = CommentReply::findOrFail($replyId);
+            $user = auth()->user();
+            $message = $this->gestionarReplyLike($user, $reply);
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => $message
+            ], 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            Log::error("Error en replyLike@CommentController. " . $th->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error al dar like en el comentario. ' . $th->getMessage()
             ], 500);
         }
     }

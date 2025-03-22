@@ -23,6 +23,11 @@ class CommentReply extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function likes()
+    {
+        return $this->hasMany(CommentReplyLike::class);
+    }
+
     public static function createReply($data, $id) {
         $reply = CommentReply::create([
             'reply' => $data['reply'],
