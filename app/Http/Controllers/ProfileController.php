@@ -8,9 +8,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\EditProfileRequest;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class ProfileController extends Controller
 {
+    // Guardar imagen en servidor
     public function storageImage($image, $user)
     {
         try {
@@ -23,6 +25,7 @@ class ProfileController extends Controller
         }
     }
 
+    // Eliminar imagen del servidor
     public function deleteImg($user)
     {
         try {
@@ -36,21 +39,26 @@ class ProfileController extends Controller
         }
     }
 
+    // Editar datos de usuario como la imagen o la descripcion
     public function editProfile(EditProfileRequest $request)
     {
         try {
             $data = $request->validated();
-            $user = auth()->user();
+            $user = JWTAuth::user();
+
+            $defaultImgUrl = env('APP_URL') . '/storage/default/default_user.png';
+
             if ($request->hasFile('img')) {
-                if ($user->img != 'http://localhost:8000/storage/default/default_user.png') {
+                if ($user->img != $defaultImgUrl) {
                     $this->deleteImg($user);
                 }
                 $data['img'] = $this->storageImage($request->file('img'), $user);
             } else if (isset($data['default_img'])) {
-                if ($user->img != 'http://localhost:8000/storage/default/default_user.png') {
+                if ($user->img != $defaultImgUrl) {
                     $this->deleteImg($user);
                 }
             }
+
             User::updateUser($data, $user);
 
             return response()->json([
@@ -58,7 +66,6 @@ class ProfileController extends Controller
                 'message' => 'Datos actualizados correctamente.'
             ], 200);
         } catch (\Throwable $th) {
-            //throw $th;
             Log::error('Error en editProfile@ProfileController. ' . $th->getMessage());
             return response()->json([
                 'status' => 'error',

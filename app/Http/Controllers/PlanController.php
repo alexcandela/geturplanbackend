@@ -11,17 +11,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Contracts\Providers\Auth;
 use Illuminate\Database\Eloquent\Collection;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class PlanController extends Controller
 {
-    public function hasReplies($plans)
-    {
-        try {
-        } catch (\Throwable $th) {
-            Log::error('Error en hasReplies@PlanController. ' . $th->getMessage());
-        }
-    }
+    // public function hasReplies($plans)
+    // {
+    //     try {
+    //     } catch (\Throwable $th) {
+    //         Log::error('Error en hasReplies@PlanController. ' . $th->getMessage());
+    //     }
+    // }
 
+    // Obtener planes populares
     public function getPopularPlans()
     {
         try {
@@ -32,7 +34,7 @@ class PlanController extends Controller
                 ->with('user', 'categories', 'comments')
                 ->take(4)
                 ->get();
-            if ($user = auth()->user()) {
+            if ($user = JWTAuth::user()) {
                 $userId = $user->id;
                 $plans->each(function ($plan) use ($userId) {
                     $plan->has_liked = $plan->likes()->where('user_id', $userId)->exists();
@@ -52,42 +54,15 @@ class PlanController extends Controller
         }
     }
 
+    // Obtener plan por id
     public function getPlanById($id)
     {
         try {
-            $plan = Plan::withCount('likes')
-                ->with([
-                    'user',
-                    'categories',
-                    'secondaryImages',
-                    'comments' => function ($query) {
-                        $query->orderBy('created_at', 'desc');
-                    },
-                    'comments.user',
-                    'comments.likes',
-                    'comments.replies',
-                    'comments.replies.user',
-                    'comments.replies.likes'
-                ])
-                ->findOrFail($id);
+            $plan = $this->consultaSQLPlan($id);
+            $plan->comments = $this->agregarDatosComments($plan->comments);
 
-            foreach ($plan->comments as $comment) {
-                $comment->likes_count = $comment->likes->count();
-                $comment->has_replies = $comment->replies->isNotEmpty();
-                foreach ($comment->replies as $reply) {
-                    $reply->likes_count = $reply->likes->count();
-                }
-            }
-
-            if ($user = auth()->user()) {
-                $userId = $user->id;
-                $plan->has_liked = $plan->likes()->where('user_id', $userId)->exists();
-                foreach ($plan->comments as $comment) {
-                    $comment->has_liked = $comment->likes()->where('user_id', $userId)->exists();
-                    foreach ($comment->replies as $reply) {
-                        $reply->has_liked = $reply->likes()->where('user_id', $userId)->exists();
-                    }
-                }
+            if ($user = JWTAuth::user()) {
+                $plan = $this->detectarUserLike($plan, $user->id);
             }
             return response()->json([
                 'status' => 'success',
@@ -102,7 +77,53 @@ class PlanController extends Controller
         }
     }
 
+    // Obtener el plan junto a todas sus relaciones 
+    public function consultaSQLPlan($id)
+    {
+        return Plan::withCount('likes')
+            ->with([
+                'user',
+                'categories',
+                'secondaryImages',
+                'comments' => function ($query) {
+                    $query->orderBy('created_at', 'desc');
+                },
+                'comments.user',
+                'comments.likes',
+                'comments.replies',
+                'comments.replies.user',
+                'comments.replies.likes'
+            ])
+            ->findOrFail($id);
+    }
 
+    // Agregar datos adicionales necesarios como el conteo de likes y las respuestas a los comentarios
+    public function agregarDatosComments($comments)
+    {
+        foreach ($comments as $comment) {
+            $comment->likes_count = $comment->likes->count();
+            $comment->has_replies = $comment->replies->isNotEmpty();
+            foreach ($comment->replies as $reply) {
+                $reply->likes_count = $reply->likes->count();
+            }
+        }
+        return $comments;
+    }
+
+    // Detectar si el usuario logeado ya habia dado like en el plan y/o comentarios para mostrarlo luego visualmente
+    public function detectarUserLike($plan, $userId)
+    {
+        $plan->has_liked = $plan->likes()->where('user_id', $userId)->exists();
+        foreach ($plan->comments as $comment) {
+            $comment->has_liked = $comment->likes()->where('user_id', $userId)->exists();
+            foreach ($comment->replies as $reply) {
+                $reply->has_liked = $reply->likes()->where('user_id', $userId)->exists();
+            }
+        }
+        return $plan;
+    }
+
+    // Obtener todos los planes con paginate
     public function getAllPlans(Request $request)
     {
         $request->validate([
@@ -115,7 +136,7 @@ class PlanController extends Controller
 
             $plans = $plansQuery->paginate(8);
 
-            if ($user = auth()->user()) {
+            if ($user = JWTAuth::user()) {
                 $userId = $user->id;
                 $plans->getCollection()->transform(function ($plan) use ($userId) {
                     $plan->has_liked = $plan->likes()->where('user_id', $userId)->exists();
@@ -136,36 +157,24 @@ class PlanController extends Controller
         }
     }
 
+    // Obtener los planes marcados como favoritos
     public function getFavoritePlans(Request $request)
     {
         $request->validate([
             'page' => 'required|integer',
         ]);
-
         try {
-            $user = auth()->user();
+            if ($user = JWTAuth::user()) {
+                $plansQuery = $this->buildQueryFavoritePlans($user);
 
-            $plansQuery = Plan::withCount('likes')
-                ->whereHas('likes', function ($query) use ($user) {
-                    $query->where('user_id', $user->id);
-                })
-                ->with('user', 'categories', 'comments')
-                ->whereIn('id', function ($query) use ($user) {
-                    $query->select('plan_id')
-                        ->from('likes')
-                        ->where('user_id', $user->id)
-                        ->orderBy('created_at', 'desc');
+                $plans = $plansQuery->paginate(8);
+
+
+                $plans->getCollection()->transform(function ($plan) use ($user) {
+                    $plan->has_liked = $plan->likes()->where('user_id', $user->id)->exists();
+                    return $plan;
                 });
-
-            $plans = $plansQuery->paginate(8);
-
-
-            $plans->getCollection()->transform(function ($plan) use ($user) {
-                $plan->has_liked = $plan->likes()->where('user_id', $user->id)->exists();
-                return $plan;
-            });
-
-
+            }
             return response()->json([
                 'status' => 'success',
                 'plans' => $plans,
@@ -179,6 +188,23 @@ class PlanController extends Controller
         }
     }
 
+    // Consulta para obtener los planes que el usuario ha marcado como favoritos
+    public function buildQueryFavoritePlans($user)
+    {
+        return Plan::withCount('likes')
+            ->whereHas('likes', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->with('user', 'categories', 'comments')
+            ->whereIn('id', function ($query) use ($user) {
+                $query->select('plan_id')
+                    ->from('likes')
+                    ->where('user_id', $user->id)
+                    ->orderBy('created_at', 'desc');
+            });
+    }
+
+    // Ordenar planes por fecha o mas populares
     public function ordenar($data, $query)
     {
         try {
@@ -200,6 +226,7 @@ class PlanController extends Controller
         }
     }
 
+    // Buscar planes segun los filtros obtenidos
     public function buildQuery($data)
     {
         try {
@@ -228,12 +255,13 @@ class PlanController extends Controller
         }
     }
 
+    // Obtener los planes de la busqueda con filtros
     public function buscar(BusquedaRequest $request)
     {
         try {
             $query = $this->buildQuery($request);
             $plans = $query->paginate(8);
-            if ($user = auth()->user()) {
+            if ($user = JWTAuth::user()) {
                 $userId = $user->id;
                 $plans->getCollection()->transform(function ($plan) use ($userId) {
                     $plan->has_liked = $plan->likes()->where('user_id', $userId)->exists();
@@ -253,12 +281,13 @@ class PlanController extends Controller
         }
     }
 
+    // Publicar plan
     public function postPlan(PlanFormRequest $request)
     {
         try {
             $data = $request->validated();
             $data['categories'] = explode(',', $data['categories']);
-            $user = auth()->user();
+            $user = JWTAuth::user();
             $plan = new Plan();
             $plan = $plan->createPlan($data, $user);
             return response()->json([
@@ -276,10 +305,11 @@ class PlanController extends Controller
         }
     }
 
+    // Eliminar plan
     public function deletePlan($id)
     {
         try {
-            $user = auth()->user();
+            $user = JWTAuth::user();
             $plan = Plan::find($id);
 
             if (!$plan) {
@@ -310,7 +340,7 @@ class PlanController extends Controller
         }
     }
 
-
+    // Comprobar que el plan pertenece al usuario
     public function checkPlan($userId, $planId)
     {
         try {
@@ -326,6 +356,7 @@ class PlanController extends Controller
         }
     }
 
+    // Devolver el array sin la url enviada para eliminar ($urlToExclude)
     function excludeUrl(array $urls, $urlToExclude)
     {
         return array_filter($urls, function ($url) use ($urlToExclude) {
@@ -333,11 +364,12 @@ class PlanController extends Controller
         });
     }
 
+    // Actualizar plan
     public function updatePlan(PlanUpdateFormRequest $request, $planId)
     {
         try {
             $data = $request->validated();
-            $user = auth()->user();
+            $user = JWTAuth::user();
             if ($planToEdit = $this->checkPlan($user->id, $planId)) {
                 $data['categories'] = explode(',', $data['categories']);
                 if (isset($data['imagesToDelete'])) {

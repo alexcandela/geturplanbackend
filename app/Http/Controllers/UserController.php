@@ -7,21 +7,18 @@ use App\Models\User;
 use App\Notifications\ResetPassword;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
+    // Obtener usuario por username
     public function getUser($username)
     {
         try {
             $same = false;
             $user = User::where('username', $username)->firstOrFail();
 
-            $plans = Plan::where('user_id', $user->id)
-                ->withCount('likes')
-                ->with(['user', 'categories', 'comments'])
-                ->paginate(3);
-
-            $loggedUser = auth()->user();
+            $loggedUser = JWTAuth::user();
             if ($loggedUser) {
                 $same = $loggedUser->username == $username;
             }
@@ -40,6 +37,7 @@ class UserController extends Controller
         }
     }
 
+    // Obtener planes del usuario paginados
     public function getUserPlans(Request $request)
     {
         $username = $request->query('username');
@@ -52,7 +50,7 @@ class UserController extends Controller
                 ->with(['user', 'categories', 'comments', 'secondaryImages'])
                 ->paginate(3);
 
-            $loggedUser = auth()->user();
+            $loggedUser = JWTAuth::user();
             if ($loggedUser) {
                 $userId = $loggedUser->id;
                 foreach ($plans as $plan) {
@@ -74,9 +72,11 @@ class UserController extends Controller
         }
     }
 
-    public function sendEmailResetPassword() {
+    // Email de recuperacion de password
+    public function sendEmailResetPassword()
+    {
         try {
-            $user = auth()->user();
+            $user = JWTAuth::user();
             $user->notify(new ResetPassword());
             return response()->json([
                 'status' => 'success',
@@ -88,7 +88,6 @@ class UserController extends Controller
                 'status' => 'error',
                 'message' => 'Error al enviar el email al usuario.'
             ], 500);
-            
         }
     }
 }

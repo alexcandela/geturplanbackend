@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class CategoryController extends Controller
 {
+    // Obtener categorias
     public function getCategories()
     {
         try {

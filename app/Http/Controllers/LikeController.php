@@ -6,9 +6,11 @@ use App\Models\Like;
 use App\Models\Plan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class LikeController extends Controller
 {
+    // Agregar o quitar like a un plan
     public function gestionarLike($user, $plan){
         if ($plan->likes()->where('user_id', $user->id)->exists()) {
             $like = $plan->likes()->where('user_id', $user->id);
@@ -20,6 +22,7 @@ class LikeController extends Controller
         }
     }
 
+    // Funcion principal de like
     public function like(Request $request) {
         try {
             $data = $request->validate([
@@ -27,7 +30,7 @@ class LikeController extends Controller
             ]);
             $planId = $data['planId'];
             $plan = Plan::findOrFail($planId);
-            $user = auth()->user();
+            $user = JWTAuth::user();
 
             $message = $this->gestionarLike($user, $plan);
             

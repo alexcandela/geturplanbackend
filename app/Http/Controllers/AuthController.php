@@ -16,18 +16,24 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller
 {
+    // Generar el token JWT con datos del usuario
+    public function createToken($user)
+    {
+        $custom_claims = [
+            'id' => $user->id,
+            'username' => $user->username,
+        ];
+        
+        return JWTAuth::claims($custom_claims)->fromUser($user);
+    }
+
     // Registro de usuarios pasando un token JWT.
     public function register(RegisterRequest $request)
     {
         $request->validated();
         try {
             $user = User::createUser($request);
-
-            $custom_claims = [
-                'id' => $user->id,
-                'username' => $user->username,
-            ];
-            $token = JWTAuth::claims($custom_claims)->fromUser($user);
+            $token = $this->createToken($user);
 
             return response()->json([
                 'status' => 'success',
@@ -49,14 +55,24 @@ class AuthController extends Controller
         }
     }
 
+    // Generar token personalizado al iniciar sesion
+    public function jwtAttempt($user, $input)
+    {
+        $custom_claims = [
+            'id' => $user->id,
+            'username' => $user->username,
+        ];
+
+        return JWTAuth::claims($custom_claims)->attempt($input);
+    }
+
     // Login de usuarios pasando un token JWT.
     public function login(LoginRequest $request)
     {
         try {
-            $request->validated();
             $input = $request->only('email', 'password');
 
-            // Intentar autenticar al usuario y obtener un token JWT
+            // Si las credenciales no son correctas enviar error 401
             if (!$jwt_token = JWTAuth::attempt($input)) {
                 return response()->json([
                     'status' => 'invalid_credentials',
@@ -66,11 +82,8 @@ class AuthController extends Controller
 
             $user = JWTAuth::user();
 
-            $custom_claims = [
-                'id' => $user->id,
-                'username' => $user->username,
-            ];
-            $jwt_token = JWTAuth::claims($custom_claims)->attempt($input);
+            // Si la autenticación es exitosa, generar el token
+            $jwt_token = $this->jwtAttempt($user, $input);
 
             return response()->json([
                 'status' => 'success',
