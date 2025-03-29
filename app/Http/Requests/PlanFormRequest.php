@@ -26,10 +26,11 @@ class PlanFormRequest extends FormRequest
             'description' => 'required|string|max:700',
             'province' => 'required|string|max:255',
             'city' => 'required|string|max:255',
-            'url' => 'required|url',
             'categories' => 'required|string',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
             'principal_image' => 'required|image|mimes:jpeg,png,jpg,svg|max:5120',
-            'secondary_images.*' => 'image|mimes:jpeg,png,jpg,svg|max:5120', 
+            'secondary_images.*' => 'image|mimes:jpeg,png,jpg,svg|max:5120',
         ];
     }
 }

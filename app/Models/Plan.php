@@ -18,6 +18,8 @@ class Plan extends Model
         'city',
         'url',
         'img',
+        'latitude',
+        'longitude',
         'user_id',
     ];
     public function user()
@@ -65,12 +67,16 @@ class Plan extends Model
     public function createPlan($data, $user)
     {
         try {
+            $lat = (float) $data['latitude'];
+            $long = (float) $data['longitude'];
+
             $plan = Plan::create([
                 'name' => $data['name'],
                 'description' => $data['description'],
                 'province' => $data['province'],
                 'city' => $data['city'],
-                'url' => $data['url'],
+                'latitude' => $lat,
+                'longitude' => $long,
                 'img' => 'null',
                 'user_id' => $user->id
             ]);
@@ -164,12 +170,16 @@ class Plan extends Model
 
     public function updatePlan($data, $plan)
     {
+        $lat = (float) $data['latitude'];
+        $long = (float) $data['longitude'];
+
         $plan->update([
             'name' => $data['name'],
             'description' => $data['description'],
             'province' => $data['province'],
             'city' => $data['city'],
-            'url' => $data['url'],
+            'latitude' => $lat,
+            'longitude' => $long,
         ]);
         if (isset($data['principal_image'])) {
             $this->deleteImg($plan);

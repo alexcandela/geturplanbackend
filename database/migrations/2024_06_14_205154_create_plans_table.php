@@ -18,7 +18,8 @@ return new class extends Migration
             $table->string('city');
             $table->string('province');
             $table->string('img');
-            $table->string('url');
+            $table->double('latitude', 10, 6);
+            $table->double('longitude', 10, 6);
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
