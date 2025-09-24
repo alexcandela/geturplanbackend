@@ -30,8 +30,8 @@ RUN mkdir -p storage/framework/views storage/framework/cache storage/logs bootst
     && chmod -R 775 storage bootstrap/cache
 
 # 9. Generar APP_KEY y JWT_SECRET solo si no existen (opcional, mejor usar variables de Render)
-# RUN php artisan key:generate --ansi
-# RUN php artisan jwt:secret --ansi
+RUN php artisan key:generate --ansi
+RUN php artisan jwt:secret --ansi
 
 # 10. Enlazar storage
 RUN php artisan storage:link || true
