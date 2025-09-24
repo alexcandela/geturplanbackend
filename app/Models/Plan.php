@@ -185,7 +185,7 @@ class Plan extends Model
             $this->deleteImg($plan);
             $img = $this->storageImage($data['principal_image'], $plan);
             $plan->update([
-                'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $img
+                'img' => url('storage/images/plans/' . $plan->id . '/' . $img)
             ]);
         }
 
@@ -203,7 +203,7 @@ class Plan extends Model
             foreach ($data['secondary_images'] as $img) {
                 $secimg = $this->storageImage($img, $plan);
                 Secondaryimage::create([
-                    'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $secimg,
+                    'img' => url('storage/images/plans/' . $plan->id . '/' . $secimg),
                     'plan_id' => $plan->id
                 ]);
             }
