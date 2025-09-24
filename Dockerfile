@@ -1,35 +1,44 @@
-# Imagen base PHP 8.2 + Apache
-FROM php:8.2-apache
+# 1. Base
+FROM php:8.2-fpm
 
-# Instalar dependencias necesarias
+# 2. Dependencias del sistema
 RUN apt-get update && apt-get install -y \
-    git curl zip unzip libpq-dev libpng-dev libjpeg-dev libfreetype6-dev \
-    && docker-php-ext-install pdo pdo_pgsql gd \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    git \
+    unzip \
+    libpq-dev \
+    libzip-dev \
+    zip \
+    && docker-php-ext-install pdo_pgsql
 
-# Instalar Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# 3. Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Directorio de trabajo
+# 4. Directorio de trabajo
 WORKDIR /var/www/html
 
-# Copiar proyecto
+# 5. Copiar proyecto
 COPY . .
 
-# Copiar .env.example como .env
-RUN cp .env.example .env
-
-# Crear carpetas necesarias con permisos
-RUN mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
-
-# Instalar dependencias de Laravel
+# 6. Instalar dependencias de Laravel
 RUN composer install --no-dev --optimize-autoloader
 
-# Comando de arranque
-CMD bash -c "\
-    php artisan key:generate --force && \
-    php artisan jwt:secret --force && \
-    php artisan storage:link && \
-    php artisan migrate --force && \
-    php artisan serve --host=0.0.0.0 --port=8080"
+# 7. Crear carpetas necesarias y dar permisos
+RUN mkdir -p storage/framework/views storage/framework/cache storage/logs bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# 8. Generar APP_KEY y JWT_SECRET si no existen
+RUN php artisan key:generate --ansi
+RUN php artisan jwt:secret --ansi
+
+# 9. Enlazar storage
+RUN php artisan storage:link
+
+# 10. Ejecutar migraciones y seed
+RUN php artisan migrate --force
+RUN php artisan db:seed --force
+
+# 11. Exponer puerto
+EXPOSE 8000
+
+# 12. Comando para ejecutar Laravel
+CMD php artisan serve --host=0.0.0.0 --port=8000
