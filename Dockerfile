@@ -26,7 +26,7 @@ RUN cp .env.example .env || true
 RUN composer install --no-dev --optimize-autoloader
 
 # 8. Limpiar caches de Laravel (IMPORTANTE para CORS y variables nuevas)
-RUN php artisan config:clear && php artisan cache:clear && php artisan route:clear && php artisan view:clear
+# RUN php artisan config:clear && php artisan cache:clear && php artisan route:clear && php artisan view:clear
 
 # 9. Crear carpetas necesarias y dar permisos
 RUN mkdir -p storage/framework/views storage/framework/cache storage/logs bootstrap/cache \
@@ -48,4 +48,6 @@ RUN php artisan db:seed --class=ProductionDatabaseSeeder --force
 EXPOSE 8000
 
 # 14. Comando para ejecutar Laravel
-CMD php artisan serve --host=0.0.0.0 --port=8000
+CMD php artisan config:clear && php artisan cache:clear && php artisan route:clear && php artisan view:clear && \
+    php artisan serve --host=0.0.0.0 --port=8000
+
