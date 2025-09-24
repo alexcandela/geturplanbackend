@@ -97,11 +97,11 @@ class User extends Authenticatable implements JWTSubject
         ]);
         if (isset($data['img'])) {
             $user->update([
-                'img' => url('storage/images/users/' . $user->id . '/' . $data['img'])
+                'img' => config('app.url') . '/storage/images/users/' . $user->id . '/' . $data['img']
             ]);
         } else if (isset($data['default_img'])) {
             $user->update([
-                'img' => url('storage/default/default_user.png')
+                'img' => config('app.url') . '/storage/default/default_user.png'
             ]);
         }
         
