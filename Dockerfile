@@ -10,26 +10,29 @@ RUN apt-get update && apt-get install -y \
 # Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Establecer directorio de trabajo
+# Directorio de trabajo
 WORKDIR /var/www/html
 
 # Copiar proyecto
 COPY . .
 
-# Crear .env si no existe
-RUN if [ ! -f .env ]; then cp .env.example .env; fi
+# Copiar .env.example como .env
+RUN cp .env.example .env
+
+# Crear carpetas necesarias con permisos
+RUN mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
 # Instalar dependencias de Laravel
 RUN composer install --no-dev --optimize-autoloader
 
-# Comando de arranque: APP_KEY, caches, migraciones, servidor
+# Comando de arranque
 CMD bash -c "\
-    if ! grep -q APP_KEY .env; then echo 'APP_KEY=' >> .env; fi && \
     php artisan key:generate --force && \
+    php artisan jwt:secret --force && \
     php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache && \
     php artisan storage:link && \
     php artisan migrate --force && \
     php artisan serve --host=0.0.0.0 --port=8080"
-
