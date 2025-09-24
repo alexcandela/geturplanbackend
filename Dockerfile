@@ -19,24 +19,24 @@ WORKDIR /var/www/html
 # 5. Copiar proyecto
 COPY . .
 
-# 6. Instalar dependencias de Laravel (producción)
-RUN composer install --no-dev --optimize-autoloader
+# 6. Copiar .env.example como .env si no existe (importante para key generation y config)
+RUN cp .env.example .env || true
 
-# 7. Copiar .env (tienes que ponerlo en tu repo privado o en Render como archivo secreto)
-COPY .env .env
+# 7. Instalar dependencias de Laravel
+RUN composer install --no-dev --optimize-autoloader
 
 # 8. Crear carpetas necesarias y dar permisos
 RUN mkdir -p storage/framework/views storage/framework/cache storage/logs bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# 9. Generar APP_KEY y JWT_SECRET
-RUN php artisan key:generate --ansi
-RUN php artisan jwt:secret --ansi
+# 9. Generar APP_KEY y JWT_SECRET solo si no existen (opcional, mejor usar variables de Render)
+# RUN php artisan key:generate --ansi
+# RUN php artisan jwt:secret --ansi
 
 # 10. Enlazar storage
-RUN php artisan storage:link
+RUN php artisan storage:link || true
 
-# 11. Ejecutar migraciones y seed
+# 11. Ejecutar migraciones y seed (asegúrate que DB_* variables están definidas en Render)
 RUN php artisan migrate --force
 RUN php artisan db:seed --class=ProductionDatabaseSeeder --force
 
