@@ -23,9 +23,13 @@ RUN if [ ! -f .env ]; then cp .env.example .env; fi
 RUN composer install --no-dev --optimize-autoloader
 
 # Comando de arranque: APP_KEY, caches, migraciones, servidor
-CMD php artisan key:generate --force && \
+CMD bash -c "\
+    if ! grep -q APP_KEY .env; then echo 'APP_KEY=' >> .env; fi && \
+    php artisan key:generate --force && \
     php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache && \
+    php artisan storage:link && \
     php artisan migrate --force && \
-    php artisan serve --host=0.0.0.0 --port=8080
+    php artisan serve --host=0.0.0.0 --port=8080"
+
