@@ -19,35 +19,25 @@ WORKDIR /var/www/html
 # 5. Copiar proyecto
 COPY . .
 
-# 6. Copiar .env.example como .env si no existe
-RUN cp .env.example .env || true
-
-# 7. Instalar dependencias de Laravel
+# 6. Instalar dependencias de Laravel
 RUN composer install --no-dev --optimize-autoloader
 
-# 8. Limpiar caches de Laravel (IMPORTANTE para CORS y variables nuevas)
-# RUN php artisan config:clear && php artisan cache:clear && php artisan route:clear && php artisan view:clear
-
-# 9. Crear carpetas necesarias y dar permisos
+# 7. Crear carpetas necesarias y dar permisos
 RUN mkdir -p storage/framework/views storage/framework/cache storage/logs bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# 10. Generar APP_KEY y JWT_SECRET solo si no existen
-# (mejor definir APP_KEY y JWT_SECRET en Render directamente)
-RUN php artisan key:generate --ansi || true
-RUN php artisan jwt:secret --ansi || true
-
-# 11. Enlazar storage
+# 8. Enlazar storage
 RUN php artisan storage:link || true
 
-# 12. Ejecutar migraciones y seed
-RUN php artisan migrate --force
-RUN php artisan db:seed --class=ProductionDatabaseSeeder --force
+# 9. Ejecutar migraciones (la base debe estar accesible desde Render)
+RUN php artisan migrate --force || true
 
-# 13. Exponer puerto
+# 10. Ejecutar seed de producción (opcional)
+RUN php artisan db:seed --class=ProductionDatabaseSeeder --force || true
+
+# 11. Exponer puerto
 EXPOSE 8000
 
-# 14. Comando para ejecutar Laravel
+# 12. Comando para ejecutar Laravel y limpiar caches al inicio
 CMD php artisan config:clear && php artisan cache:clear && php artisan route:clear && php artisan view:clear && \
     php artisan serve --host=0.0.0.0 --port=8000
-
