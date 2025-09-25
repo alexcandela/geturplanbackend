@@ -42,7 +42,7 @@ RUN php artisan storage:link || true
 
 # 12. Ejecutar migraciones y seed
 RUN php artisan migrate --force
-RUN php artisan db:seed --force
+RUN php artisan db:seed --class=ProductionDatabaseSeeder --force
 
 # 13. Exponer puerto
 EXPOSE 8000
