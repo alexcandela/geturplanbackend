@@ -82,6 +82,7 @@ class User extends Authenticatable implements JWTSubject
             'name' => $request->nombre,
             'last_name' => $request->apellido,
             'username' => $request->username,
+            'img' => env('APP_URL') . '/storage/default/default_user.png',
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
