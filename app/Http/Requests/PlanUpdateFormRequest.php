@@ -29,9 +29,9 @@ class PlanUpdateFormRequest extends FormRequest
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'categories' => 'required|string',
-            'principal_image' => 'image|mimes:jpeg,png,jpg,svg|max:5120',
+            'principal_image' => 'image|mimes:jpeg,png,jpg,svg|max:10240',
             'secondary_images' => 'array|max:4',
-            'secondary_images.*' => 'image|mimes:jpeg,png,jpg,svg|max:5120', 
+            'secondary_images.*' => 'image|mimes:jpeg,png,jpg,svg|max:10240', 
             'imagesToDelete' => 'string'
         ];
     }

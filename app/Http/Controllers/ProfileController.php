@@ -12,12 +12,34 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class ProfileController extends Controller
 {
+
+    public function checkProd()
+    {
+        return app()->environment('production');
+    }
     // Guardar imagen en servidor
     public function storageImage($image, $user)
     {
         try {
             $imageName = Str::random(40) . '.' . $image->getClientOriginalExtension();
-            Storage::disk('public')->putFileAs('images/users/' . $user->id . '/', $image, $imageName);
+            $path = 'images/users/' . $user->id . '/' . $imageName;
+
+            if ($this->checkProd()) {
+                // Producción: subir a Supabase (disco supabase)
+                Storage::disk('supabase')->putFileAs(
+                    'images/users/' . $user->id . '/',
+                    $image,
+                    $imageName
+                );
+                $imageName = 'https://xvzgprxywegcfprvqhtr.supabase.co/storage/v1/object/public/storage/' . $path;
+            } else {
+                // Local: guardar en storage/app/public
+                Storage::disk('public')->putFileAs(
+                    'images/users/' . $user->id . '/',
+                    $image,
+                    $imageName
+                );
+            }
             return $imageName;
         } catch (\Throwable $th) {
             //throw $th;
@@ -30,8 +52,13 @@ class ProfileController extends Controller
     {
         try {
             $imageName = basename($user->img);
-            if (Storage::disk('public')->exists('images/users/' . $user->id . '/' . $imageName)) {
-                Storage::disk('public')->delete('images/users/' . $user->id . '/' . $imageName);
+            if ($this->checkProd()) {
+                Storage::disk('supabase')->delete('images/users/' . $user->id . '/' . $imageName);
+            } else {
+
+                if (Storage::disk('public')->exists('images/users/' . $user->id . '/' . $imageName)) {
+                    Storage::disk('public')->delete('images/users/' . $user->id . '/' . $imageName);
+                }
             }
         } catch (\Throwable $th) {
             //throw $th;
@@ -46,7 +73,10 @@ class ProfileController extends Controller
             $data = $request->validated();
             $user = JWTAuth::user();
 
-            $defaultImgUrl = env('APP_URL') . '/storage/default/default_user.png';
+            $defaultImgUrl = $this->checkProd()
+                ? 'https://tu-bucket.supabase.co/storage/v1/object/public/storage/default/default_user.png'
+                : env('APP_URL') . '/storage/default/default_user.png';
+
 
             if ($request->hasFile('img')) {
                 if ($user->img != $defaultImgUrl) {

@@ -52,17 +52,74 @@ class Plan extends Model
         return $this->hasMany(Like::class);
     }
 
+    public function checkProd()
+    {
+        return app()->environment('production');
+    }
+
+
     public function storageImage($image, $plan)
     {
         try {
             $imageName = Str::random(40) . '.' . $image->getClientOriginalExtension();
-            Storage::disk('public')->putFileAs('images/plans/' . $plan->id . '/', $image, $imageName);
+            $path = 'images/plans/' . $plan->id . '/' . $imageName;
+            if ($this->checkProd()) {
+                // Producción: subir a Supabase (disco supabase)
+                Storage::disk('supabase')->putFileAs(
+                    'images/plans/' . $plan->id . '/',
+                    $image,
+                    $imageName
+                );
+                $imageName = 'https://xvzgprxywegcfprvqhtr.supabase.co/storage/v1/object/public/storage/' . $path;
+            } else {
+                // Local: guardar en storage/app/public
+                Storage::disk('public')->putFileAs(
+                    'images/plans/' . $plan->id . '/',
+                    $image,
+                    $imageName
+                );
+            }
             return $imageName;
         } catch (\Throwable $th) {
-            //throw $th;
             Log::error('Error en storageImage@PlanModel. ' . $th->getMessage());
         }
     }
+
+    public function storeSecImages($secImgs, $plan)
+    {
+        foreach ($secImgs as $img) {
+            $imageName = Str::random(40) . '.' . $img->getClientOriginalExtension();
+
+            if ($this->checkProd()) {
+                // Subir a Supabase
+                Storage::disk('supabase')->putFileAs(
+                    'images/plans/' . $plan->id . '/',
+                    $img,
+                    $imageName
+                );
+
+                // URL pública correcta de Supabase
+                $secimgUrl = 'https://xvzgprxywegcfprvqhtr.supabase.co/storage/v1/object/public/storage/images/plans/'
+                    . $plan->id . '/' . $imageName;
+            } else {
+                // Guardar en storage local
+                Storage::disk('public')->putFileAs(
+                    'images/plans/' . $plan->id . '/',
+                    $img,
+                    $imageName
+                );
+
+                $secimgUrl = env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $imageName;
+            }
+
+            // Guardar en la base de datos
+            Secondaryimage::create([
+                'img' => $secimgUrl,
+                'plan_id' => $plan->id
+            ]);
+        }
+    }
+
 
     public function createPlan($data, $user)
     {
@@ -81,9 +138,17 @@ class Plan extends Model
                 'user_id' => $user->id
             ]);
             $img = $this->storageImage($data['principal_image'], $plan);
-            $plan->update([
-                'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $img
-            ]);
+            if ($this->checkProd()) {
+                $plan->update([
+                    'img' => $img
+                ]);
+            } else {
+                $plan->update([
+                    'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $img
+                ]);
+            }
+
+
             foreach ($data['categories'] as $name) {
                 $category = Category::where('name', $name)->first();
                 if ($category) { // Verifica si la categoría existe
@@ -95,14 +160,9 @@ class Plan extends Model
                 }
             }
             if (isset($data['secondary_images'])) {
-                foreach ($data['secondary_images'] as $img) {
-                    $secimg = $this->storageImage($img, $plan);
-                    Secondaryimage::create([
-                        'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $secimg,
-                        'plan_id' => $plan->id
-                    ]);
-                }
+                $this->storeSecImages($data['secondary_images'], $plan);
             }
+
             return $plan;
         } catch (\Throwable $th) {
             Log::error('Error en createPlan@PlanModel. ' . $th->getMessage());
@@ -125,8 +185,13 @@ class Plan extends Model
     {
         try {
             $imageName = basename($plan->img);
-            if (Storage::disk('public')->exists('images/plans/' . $plan->id . '/' . $imageName)) {
-                Storage::disk('public')->delete('images/plans/' . $plan->id . '/' . $imageName);
+            if ($this->checkProd()) {
+                Storage::disk('supabase')->delete('images/plans/' . $plan->id . '/' . $imageName);
+            } else {
+
+                if (Storage::disk('public')->exists('images/plans/' . $plan->id . '/' . $imageName)) {
+                    Storage::disk('public')->delete('images/plans/' . $plan->id . '/' . $imageName);
+                }
             }
         } catch (\Throwable $th) {
             //throw $th;
@@ -138,8 +203,12 @@ class Plan extends Model
     {
         try {
             $imageName = basename($img);
-            if (Storage::disk('public')->exists('images/plans/' . $plan->id . '/' . $imageName)) {
-                Storage::disk('public')->delete('images/plans/' . $plan->id . '/' . $imageName);
+            if ($this->checkProd()) {
+                Storage::disk('supabase')->delete('images/plans/' . $plan->id . '/' . $imageName);
+            } else {
+                if (Storage::disk('public')->exists('images/plans/' . $plan->id . '/' . $imageName)) {
+                    Storage::disk('public')->delete('images/plans/' . $plan->id . '/' . $imageName);
+                }
             }
         } catch (\Throwable $th) {
             //throw $th;
@@ -166,8 +235,6 @@ class Plan extends Model
         });
     }
 
-    public function updateImgSecundarias($images) {}
-
     public function updatePlan($data, $plan)
     {
         $lat = (float) $data['latitude'];
@@ -182,11 +249,17 @@ class Plan extends Model
             'longitude' => $long,
         ]);
         if (isset($data['principal_image'])) {
-            $this->deleteImg($plan);
             $img = $this->storageImage($data['principal_image'], $plan);
-            $plan->update([
-                'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $img
-            ]);
+            $this->deleteImg($plan);
+            if ($this->checkProd()) {
+                $plan->update([
+                    'img' => $img
+                ]);
+            } else {
+                $plan->update([
+                    'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $img
+                ]);
+            }
         }
 
         if (isset($data['categories'])) {
@@ -202,12 +275,41 @@ class Plan extends Model
         if (isset($data['secondary_images'])) {
             foreach ($data['secondary_images'] as $img) {
                 $secimg = $this->storageImage($img, $plan);
-                Secondaryimage::create([
-                    'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $secimg,
-                    'plan_id' => $plan->id
-                ]);
+                if ($this->checkProd()) {
+                    Secondaryimage::create([
+                        'img' => $secimg,
+                        'plan_id' => $plan->id
+                    ]);
+                } else {
+                    Secondaryimage::create([
+                        'img' => env('APP_URL') . '/storage/images/plans/' . $plan->id . '/' . $secimg,
+                        'plan_id' => $plan->id
+                    ]);
+                }
             }
         }
         return $plan;
+    }
+
+    public function deletePlan($plan)
+    {
+        try {
+            // Eliminar imagen principal
+            $this->deleteImg($plan);
+
+            // Eliminar imágenes secundarias
+            $secondaryImages = $plan->secondaryImages;
+            foreach ($secondaryImages as $secImg) {
+                $this->deleteImagenSecundaria($secImg->img, $plan);
+            }
+
+            // Eliminar registros de imágenes secundarias de la base de datos
+            Secondaryimage::where('plan_id', $plan->id)->delete();
+
+            // Finalmente, eliminar el plan
+            $plan->delete();
+        } catch (\Throwable $th) {
+            Log::error('Error en deletePlan@PlanModel. ' . $th->getMessage());
+        }
     }
 }

@@ -29,8 +29,8 @@ class PlanFormRequest extends FormRequest
             'categories' => 'required|string',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
-            'principal_image' => 'required|image|mimes:jpeg,png,jpg,svg|max:5120',
-            'secondary_images.*' => 'image|mimes:jpeg,png,jpg,svg|max:5120',
+            'principal_image' => 'required|image|mimes:jpeg,png,jpg,svg|max:10240',
+            'secondary_images.*' => 'image|mimes:jpeg,png,jpg,svg|max:10240',
         ];
     }
 }
