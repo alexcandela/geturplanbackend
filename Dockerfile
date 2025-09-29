@@ -37,5 +37,4 @@ EXPOSE 8000
 
 # 12. Comando para ejecutar Laravel y limpiar caches al inicio.
 CMD php artisan config:clear && php artisan cache:clear && php artisan route:clear && php artisan view:clear && \
-    php artisan db:seed --class=ProductionDatabaseSeeder --force && \
     php artisan serve --host=0.0.0.0 --port=8000
