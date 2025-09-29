@@ -23,7 +23,7 @@ class EditProfileRequest extends FormRequest
     {
         return [
             'default_img' => 'nullable|string',
-            'img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
+            'img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:10240',
             'description' => 'nullable|string|max:250',
             'instagram' => 'nullable|url',
             'facebook' => 'nullable|url',
