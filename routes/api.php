@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\EditProfileController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ProfileController;
@@ -16,6 +17,7 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+Route::post('/health', [HealthController::class, 'active']);
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
