@@ -320,7 +320,8 @@ class PlanController extends Controller
             }
 
             if ($plan->user_id == $user->id) {
-                $plan->delete();
+                $p = new Plan();
+                $p->deletePlan($plan);
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Plan eliminado correctamente',
