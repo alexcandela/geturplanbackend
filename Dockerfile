@@ -29,12 +29,13 @@ RUN mkdir -p storage/framework/views storage/framework/cache storage/logs bootst
 # 8. Enlazar storage
 RUN php artisan storage:link
 
-# 9. Ejecutar migraciones (la base debe estar accesible desde Supabase)
-RUN php artisan migrate --force
-
 # 11. Exponer puerto
 EXPOSE 8000
 
 # 12. Comando para ejecutar Laravel y limpiar caches al inicio.
-CMD php artisan config:clear && php artisan cache:clear && php artisan route:clear && php artisan view:clear && \
+CMD php artisan config:clear && \
+    php artisan cache:clear && \
+    php artisan route:clear && \
+    php artisan view:clear && \
+    php artisan migrate --force && \
     php artisan serve --host=0.0.0.0 --port=8000
