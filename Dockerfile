@@ -33,9 +33,9 @@ RUN php artisan storage:link
 EXPOSE 8000
 
 # 12. Comando para ejecutar Laravel y limpiar caches al inicio.
-CMD php artisan config:clear && \
+CMD php artisan migrate --force && \
+    php artisan config:clear && \
     php artisan cache:clear && \
     php artisan route:clear && \
     php artisan view:clear && \
-    php artisan migrate --force && \
     php artisan serve --host=0.0.0.0 --port=8000
