@@ -29,7 +29,7 @@ RUN mkdir -p storage/framework/views storage/framework/cache storage/logs bootst
 # 8. Enlazar storage
 RUN php artisan storage:link
 
-# 9. Ejecutar migraciones (la base debe estar accesible desde Render)
+# 9. Ejecutar migraciones (la base debe estar accesible desde Supabase)
 RUN php artisan migrate --force
 
 # 11. Exponer puerto
