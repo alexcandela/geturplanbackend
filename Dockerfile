@@ -27,10 +27,10 @@ RUN mkdir -p storage/framework/views storage/framework/cache storage/logs bootst
     && chmod -R 775 storage bootstrap/cache
 
 # 8. Enlazar storage
-RUN php artisan storage:link || true
+RUN php artisan storage:link
 
 # 9. Ejecutar migraciones (la base debe estar accesible desde Render)
-RUN php artisan migrate --force || true
+RUN php artisan migrate --force
 
 # 11. Exponer puerto
 EXPOSE 8000
