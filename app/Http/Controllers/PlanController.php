@@ -32,7 +32,7 @@ class PlanController extends Controller
             }])
                 ->orderByDesc('likes_count')
                 ->with('user', 'categories', 'comments')
-                ->take(4)
+                ->take(3)
                 ->get();
             if ($user = JWTAuth::user()) {
                 $userId = $user->id;
@@ -134,7 +134,7 @@ class PlanController extends Controller
             $plansQuery = Plan::withCount('likes')
                 ->with('user', 'categories', 'comments');
 
-            $plans = $plansQuery->paginate(8);
+            $plans = $plansQuery->paginate(9);
 
             if ($user = JWTAuth::user()) {
                 $userId = $user->id;
@@ -260,7 +260,7 @@ class PlanController extends Controller
     {
         try {
             $query = $this->buildQuery($request);
-            $plans = $query->paginate(8);
+            $plans = $query->paginate(9);
             if ($user = JWTAuth::user()) {
                 $userId = $user->id;
                 $plans->getCollection()->transform(function ($plan) use ($userId) {
